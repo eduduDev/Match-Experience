@@ -27,6 +27,7 @@ export function DashboardClient() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [tables, setTables] = useState<TableData[]>([]);
   const [forming, setForming] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [dragItem, setDragItem] = useState<{ participantId: string; fromTableId: string } | null>(null);
 
   useEffect(() => {
@@ -74,6 +75,24 @@ export function DashboardClient() {
     setForming(false);
   }
 
+  async function handleReset() {
+    if (!window.confirm('Isso vai apagar todos os participantes e mesas deste evento. Essa ação não pode ser desfeita. Continuar?')) return;
+    setResetting(true);
+    try {
+      const res = await fetch('/api/admin/reset', { method: 'POST' });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        toast.error(d?.error ?? 'Erro ao resetar evento.');
+      } else {
+        toast.success('Evento resetado!');
+        await fetchData();
+      }
+    } catch {
+      toast.error('Erro de conexão.');
+    }
+    setResetting(false);
+  }
+
   async function handleDrop(targetTableId: string) {
     if (!dragItem || dragItem.fromTableId === targetTableId) {
       setDragItem(null);
@@ -113,6 +132,14 @@ export function DashboardClient() {
           className="px-5 py-2 rounded-lg border border-gray-300 text-foreground font-medium hover:bg-white transition-colors text-sm"
         >
           Sair
+        </button>
+        <button
+          type="button"
+          onClick={handleReset}
+          disabled={resetting}
+          className="px-5 py-2 rounded-lg border border-red-300 text-red-600 font-medium hover:bg-red-50 transition-colors disabled:opacity-60 text-sm"
+        >
+          {resetting ? 'Resetando...' : 'Resetar evento'}
         </button>
         <button
           type="button"
