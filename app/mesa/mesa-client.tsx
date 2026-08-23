@@ -40,7 +40,7 @@ export function MesaClient() {
     return <div className="flex justify-center mt-20"><p className="text-muted-foreground">Carregando...</p></div>;
   }
 
-  if (!data) {
+  if (!data || (data as any)?.error) {
     return <div className="flex justify-center mt-20"><p className="text-muted-foreground">Mesa ainda não disponível.</p></div>;
   }
 

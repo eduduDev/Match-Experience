@@ -22,7 +22,7 @@ export function EsperaClient() {
       if (!res.ok) return;
       const data = await res.json();
       setCount(data?.participantCount ?? 0);
-      if (data?.status === 'done') {
+      if (data?.status === 'done' && data?.hasTable) {
         router.push('/mesa');
       }
     } catch { /* silent */ }
