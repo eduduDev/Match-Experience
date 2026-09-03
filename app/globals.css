@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 39 34% 62%;
+    --background: 39 40% 96%;
     --foreground: 0 0% 17%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 17%;
@@ -20,8 +20,8 @@
     --accent-foreground: 0 0% 17%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 39 20% 82%;
-    --input: 39 20% 82%;
+    --border: 39 20% 85%;
+    --input: 39 20% 85%;
     --ring: 176 36% 17%;
     --radius: 0.625rem;
     --radius-sm: calc(0.625rem - 4px);
@@ -47,7 +47,7 @@
     --chart-5: 0 0% 60%;
   }
   .dark {
-    --background: 39 34% 62%;
+    --background: 39 40% 96%;
     --foreground: 0 0% 17%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 17%;
@@ -63,8 +63,8 @@
     --accent-foreground: 0 0% 17%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 39 20% 82%;
-    --input: 39 20% 82%;
+    --border: 39 20% 85%;
+    --input: 39 20% 85%;
     --ring: 176 36% 17%;
     --chart-1: 176 36% 17%;
     --chart-2: 28 70% 56%;
