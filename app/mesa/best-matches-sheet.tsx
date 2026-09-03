@@ -44,7 +44,7 @@ export function BestMatchesSheet({ open, onClose, matches }: Props) {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl max-h-[85vh] overflow-y-auto"
+            className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-2xl max-h-[85vh] overflow-y-auto"
           >
             <div className="p-6">
               {/* Drag handle */}
@@ -85,7 +85,7 @@ export function BestMatchesSheet({ open, onClose, matches }: Props) {
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full mt-6 py-4 rounded-lg bg-white border border-gray-200 text-foreground font-semibold hover:bg-gray-50 transition-colors"
+                className="w-full mt-6 py-4 rounded-lg bg-card border border-gray-200 text-foreground font-semibold hover:bg-gray-50 transition-colors"
               >
                 Fechar
               </button>

@@ -129,7 +129,7 @@ export function DashboardClient() {
         <button
           type="button"
           onClick={() => signOut({ callbackUrl: '/admin' })}
-          className="px-5 py-2 rounded-lg border border-gray-300 text-foreground font-medium hover:bg-white transition-colors text-sm"
+          className="px-5 py-2 rounded-lg border border-gray-300 text-foreground font-medium hover:bg-card transition-colors text-sm"
         >
           Sair
         </button>
@@ -165,7 +165,7 @@ export function DashboardClient() {
           {tables.map((table: TableData) => (
             <div
               key={table?.id}
-              className="bg-white rounded-xl p-5 shadow-sm border border-transparent hover:border-wine/20 transition-colors"
+              className="bg-card rounded-xl p-5 shadow-sm border border-transparent hover:border-wine/20 transition-colors"
               onDragOver={(e: React.DragEvent) => e.preventDefault()}
               onDrop={() => handleDrop(table?.id ?? '')}
             >
@@ -204,7 +204,7 @@ export function DashboardClient() {
 
 function KpiCard({ value, label, highlight }: { value: number | string; label: string; highlight?: boolean }) {
   return (
-    <div className="bg-white rounded-xl p-5 shadow-sm">
+    <div className="bg-card rounded-xl p-5 shadow-sm">
       <p className={`font-serif text-4xl font-bold ${highlight ? 'text-wine' : 'text-foreground'}`}>
         {value}
       </p>

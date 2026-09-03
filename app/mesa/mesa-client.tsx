@@ -76,7 +76,7 @@ export function MesaClient() {
         </p>
         <div className="space-y-3">
           {(data?.members ?? []).map((member: TableMember, idx: number) => (
-            <div key={member?.id ?? `member-${idx}`} className="bg-white rounded-xl p-4 shadow-sm flex items-start gap-3">
+            <div key={member?.id ?? `member-${idx}`} className="bg-card rounded-xl p-4 shadow-sm flex items-start gap-3">
               <div className="w-11 h-11 rounded-full bg-cream-dark flex items-center justify-center flex-shrink-0">
                 <span className="text-sm font-semibold text-brown">{getInitials(member?.name ?? '')}</span>
               </div>

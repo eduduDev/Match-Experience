@@ -59,7 +59,7 @@ export function EsperaClient() {
       </p>
 
       {/* Card de participantes */}
-      <div className="mt-10 w-full bg-white rounded-xl p-6 shadow-sm">
+      <div className="mt-10 w-full bg-card rounded-xl p-6 shadow-sm">
         <p className="text-sm text-muted-foreground">Participantes confirmados</p>
         <p className="font-serif text-4xl font-bold text-foreground mt-1">{count}</p>
         <div className="mt-3 w-full bg-cream-dark rounded-full h-2 overflow-hidden">

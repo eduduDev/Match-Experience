@@ -49,7 +49,7 @@ export function EntryForm() {
           value={name}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
           placeholder="Ludmila Gomes"
-          className="w-full px-4 py-4 rounded-lg bg-white border-0 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-wine focus:outline-none text-base"
+          className="w-full px-4 py-4 rounded-lg bg-card border-0 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-wine focus:outline-none text-base"
         />
       </div>
       <div>
@@ -61,7 +61,7 @@ export function EntryForm() {
           value={company}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCompany(e.target.value)}
           placeholder="Ex.: Papo Jurídico"
-          className="w-full px-4 py-4 rounded-lg bg-white border-0 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-wine focus:outline-none text-base"
+          className="w-full px-4 py-4 rounded-lg bg-card border-0 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-wine focus:outline-none text-base"
         />
       </div>
       <button

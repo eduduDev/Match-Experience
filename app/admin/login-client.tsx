@@ -36,7 +36,7 @@ export function AdminLoginClient() {
           type="email"
           value={email}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-          className="w-full px-4 py-3 rounded-lg bg-white border-0 text-foreground focus:ring-2 focus:ring-wine focus:outline-none"
+          className="w-full px-4 py-3 rounded-lg bg-card border-0 text-foreground focus:ring-2 focus:ring-wine focus:outline-none"
           placeholder="admin@exemplo.com"
         />
       </div>
@@ -46,7 +46,7 @@ export function AdminLoginClient() {
           type="password"
           value={password}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-          className="w-full px-4 py-3 rounded-lg bg-white border-0 text-foreground focus:ring-2 focus:ring-wine focus:outline-none"
+          className="w-full px-4 py-3 rounded-lg bg-card border-0 text-foreground focus:ring-2 focus:ring-wine focus:outline-none"
           placeholder="••••••••"
         />
       </div>
