@@ -40,10 +40,10 @@ export function EsperaClient() {
       {/* Spinner */}
       <div className="relative w-24 h-24 mb-10">
         <svg className="w-full h-full animate-spin-slow" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r="42" stroke="#E8DFD1" strokeWidth="8" fill="none" />
+          <circle cx="50" cy="50" r="42" stroke="#A88F65" strokeWidth="8" fill="none" />
           <circle
             cx="50" cy="50" r="42"
-            stroke="#8B1A2E" strokeWidth="8" fill="none"
+            stroke="#1B3A38" strokeWidth="8" fill="none"
             strokeDasharray="80 184"
             strokeLinecap="round"
           />

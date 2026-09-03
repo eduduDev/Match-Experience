@@ -71,7 +71,7 @@ export function BestMatchesSheet({ open, onClose, matches }: Props) {
                         </div>
                         <div className="flex flex-wrap gap-2 mt-3">
                           {(match?.reasons ?? []).map((reason: string, i: number) => (
-                            <span key={i} className="text-xs px-3 py-1 rounded-full bg-[#FCEEF0] text-wine font-medium">
+                            <span key={i} className="text-xs px-3 py-1 rounded-full bg-[#E3EDEC] text-wine font-medium">
                               {reason}
                             </span>
                           ))}

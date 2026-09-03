@@ -173,7 +173,7 @@ export function DashboardClient() {
                 <h3 className="font-serif text-lg font-bold text-foreground">
                   Mesa {String(table?.tableNumber ?? 0).padStart(2, '0')}
                 </h3>
-                <span className="text-xs px-3 py-1 rounded-full bg-[#FCEEF0] text-wine font-medium">
+                <span className="text-xs px-3 py-1 rounded-full bg-[#E3EDEC] text-wine font-medium">
                   {table?.participants?.length ?? 0} pessoas
                 </span>
               </div>
