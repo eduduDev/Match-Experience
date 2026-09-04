@@ -68,7 +68,7 @@ export function FormularioClient() {
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   selected
                     ? 'bg-wine text-white shadow-md'
-                    : 'bg-card text-foreground border border-gray-300 hover:border-wine'
+                    : 'bg-card text-foreground border border-border hover:border-wine'
                 }`}
               >
                 {cat}
@@ -93,7 +93,7 @@ export function FormularioClient() {
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   selected
                     ? 'bg-brown text-white shadow-md'
-                    : 'bg-card text-foreground border border-gray-300 hover:border-brown'
+                    : 'bg-card text-foreground border border-border hover:border-brown'
                 }`}
               >
                 {cat}
@@ -113,7 +113,7 @@ export function FormularioClient() {
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setComplement(e.target.value)}
           placeholder="Conte em uma frase o seu momento..."
           rows={3}
-          className="w-full px-4 py-3 rounded-lg bg-card border-0 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-wine focus:outline-none text-base resize-none"
+          className="w-full px-4 py-3 rounded-lg bg-card border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-wine focus:outline-none text-base resize-none"
         />
       </section>
 

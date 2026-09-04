@@ -56,7 +56,7 @@ export function BestMatchesSheet({ open, onClose, matches }: Props) {
 
               <div className="mt-6 space-y-4">
                 {(matches ?? []).map((match: MatchItem, idx: number) => (
-                  <div key={match?.id ?? `match-${idx}`} className="bg-cream-light rounded-xl p-4">
+                  <div key={match?.id ?? `match-${idx}`} className="bg-cream-light rounded-xl p-4 border border-border">
                     <div className="flex items-start gap-3">
                       <div className="w-11 h-11 rounded-full bg-cream-dark flex items-center justify-center flex-shrink-0">
                         <span className="text-sm font-semibold text-wine">{getInitials(match?.name ?? '')}</span>
@@ -85,7 +85,7 @@ export function BestMatchesSheet({ open, onClose, matches }: Props) {
               <button
                 type="button"
                 onClick={onClose}
-                className="w-full mt-6 py-4 rounded-lg bg-card border border-gray-200 text-foreground font-semibold hover:bg-gray-50 transition-colors"
+                className="w-full mt-6 py-4 rounded-lg bg-card border border-border text-foreground font-semibold hover:bg-muted transition-colors"
               >
                 Fechar
               </button>
