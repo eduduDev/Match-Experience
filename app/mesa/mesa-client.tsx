@@ -18,7 +18,7 @@ interface MesaData {
   participantCount: number;
   affinityLabel: string;
   members: TableMember[];
-  bestMatches: (TableMember & { reasons: string[] })[];
+  bestMatches: (TableMember & { reasons: { text: string; type: 'their-offer' | 'my-offer' }[] })[];
 }
 
 export function MesaClient() {

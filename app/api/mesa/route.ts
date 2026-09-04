@@ -48,7 +48,7 @@ export async function GET(req: Request) {
 
     // Best matches (top 3) with reasons
     const bestMatches = members.slice(0, 3).map((m: any) => {
-      const reasons: string[] = [];
+      const reasons: { text: string; type: 'their-offer' | 'my-offer' }[] = [];
       const mOffers = m?.offers ?? [];
       const mNeeds = m?.needs ?? [];
       const myNeeds = meData?.needs ?? [];
@@ -57,14 +57,13 @@ export async function GET(req: Request) {
       // What they offer that I need
       for (const cat of mOffers) {
         if (myNeeds.includes(cat)) {
-          const pronoun = 'Oferece';
-          reasons.push(`${pronoun} ${cat} \u2192 voc\u00ea precisa`);
+          reasons.push({ text: `Oferece ${cat} \u2192 voc\u00ea precisa`, type: 'their-offer' });
         }
       }
       // What I offer that they need
       for (const cat of myOffers) {
         if (mNeeds.includes(cat)) {
-          reasons.push(`Voc\u00ea oferece ${cat} \u2192 precisa`);
+          reasons.push({ text: `Voc\u00ea oferece ${cat} \u2192 precisa`, type: 'my-offer' });
         }
       }
 
