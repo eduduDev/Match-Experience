@@ -23,12 +23,6 @@ interface Props {
   matches: MatchItem[];
 }
 
-const RANK_STYLES = [
-  { badge: 'bg-wine text-white', ring: 'border-wine/30', avatar: 'bg-wine text-white' },
-  { badge: 'bg-amber text-brown-dark', ring: 'border-amber/30', avatar: 'bg-cream-dark text-brown-dark' },
-  { badge: 'bg-brown text-white', ring: 'border-brown/20', avatar: 'bg-cream-dark text-brown-dark' },
-];
-
 export function BestMatchesSheet({ open, onClose, matches }: Props) {
   function getInitials(name: string): string {
     const parts = (name ?? '').split(' ').filter(Boolean);
@@ -61,56 +55,48 @@ export function BestMatchesSheet({ open, onClose, matches }: Props) {
               {/* Drag handle */}
               <div className="w-12 h-1.5 bg-border rounded-full mx-auto mb-6" />
 
-              <p className="text-xs font-semibold tracking-[0.2em] uppercase text-amber">Top 3 conexões</p>
-              <h3 className="font-serif text-2xl font-bold text-foreground mt-1">Fale primeiro com</h3>
+              <p className="text-xs font-semibold tracking-[0.2em] uppercase text-amber">Suas conexões</p>
+              <h3 className="font-serif text-2xl font-bold text-foreground mt-1">Com quem falar</h3>
               <p className="text-sm text-muted-foreground mt-1">
-                Quem mais se encaixa no seu perfil nesta mesa.
+                Todo mundo da sua mesa, do maior ao menor encaixe.
               </p>
 
               <div className="mt-6 space-y-4">
-                {(matches ?? []).map((match: MatchItem, idx: number) => {
-                  const rank = RANK_STYLES[idx] ?? RANK_STYLES[2];
-                  return (
-                    <div
-                      key={match?.id ?? `match-${idx}`}
-                      className={`relative bg-cream-light rounded-xl p-4 border ${rank.ring}`}
-                    >
-                      <span
-                        className={`absolute -top-2 -left-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${rank.badge}`}
-                      >
-                        {idx + 1}
-                      </span>
-                      <div className="flex items-start gap-3">
-                        <div className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 ${rank.avatar}`}>
-                          <span className="text-sm font-semibold">{getInitials(match?.name ?? '')}</span>
+                {(matches ?? []).map((match: MatchItem, idx: number) => (
+                  <div
+                    key={match?.id ?? `match-${idx}`}
+                    className="bg-cream-light rounded-xl p-4 border border-border"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-11 h-11 rounded-full bg-cream-dark text-brown-dark flex items-center justify-center flex-shrink-0">
+                        <span className="text-sm font-semibold">{getInitials(match?.name ?? '')}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="font-bold text-foreground text-sm truncate">{match?.name ?? ''}</p>
+                            <p className="text-xs text-muted-foreground truncate">{match?.company ?? ''}</p>
+                          </div>
+                          <span className="font-serif text-2xl font-bold text-wine flex-shrink-0">{match?.affinity ?? 0}%</span>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="font-bold text-foreground text-sm truncate">{match?.name ?? ''}</p>
-                              <p className="text-xs text-muted-foreground truncate">{match?.company ?? ''}</p>
-                            </div>
-                            <span className="font-serif text-2xl font-bold text-wine flex-shrink-0">{match?.affinity ?? 0}%</span>
-                          </div>
-                          <div className="flex flex-wrap gap-2 mt-3">
-                            {(match?.reasons ?? []).map((reason: Reason, i: number) => (
-                              <span
-                                key={i}
-                                className={
-                                  reason?.type === 'my-offer'
-                                    ? 'text-xs px-3 py-1 rounded-full bg-[#F7E9D8] text-[#7A4A20] font-medium'
-                                    : 'text-xs px-3 py-1 rounded-full bg-[#E3EDEC] text-wine font-medium'
-                                }
-                              >
-                                {reason?.text ?? ''}
-                              </span>
-                            ))}
-                          </div>
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {(match?.reasons ?? []).map((reason: Reason, i: number) => (
+                            <span
+                              key={i}
+                              className={
+                                reason?.type === 'my-offer'
+                                  ? 'text-xs px-3 py-1 rounded-full bg-[#F7E9D8] text-[#7A4A20] font-medium'
+                                  : 'text-xs px-3 py-1 rounded-full bg-[#E3EDEC] text-wine font-medium'
+                              }
+                            >
+                              {reason?.text ?? ''}
+                            </span>
+                          ))}
                         </div>
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
 
               <button

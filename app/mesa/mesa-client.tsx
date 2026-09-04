@@ -112,7 +112,7 @@ export function MesaClient() {
         onClick={() => setSheetOpen(true)}
         className="w-full mt-8 py-4 rounded-lg bg-wine text-white font-serif text-lg font-semibold hover:bg-wine-dark transition-colors"
       >
-        Ver meus melhores matches
+        Ver minhas conexões
       </button>
 
       {/* Bottom sheet */}

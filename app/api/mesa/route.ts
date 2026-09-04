@@ -46,8 +46,8 @@ export async function GET(req: Request) {
       : 0;
     const affinityLabel = avgAff >= 70 ? 'alta' : avgAff >= 40 ? 'média' : 'baixa';
 
-    // Best matches (top 3) with reasons
-    const bestMatches = members.slice(0, 3).map((m: any) => {
+    // All connections at the table, with reasons, sorted by affinity
+    const bestMatches = members.map((m: any) => {
       const reasons: { text: string; type: 'their-offer' | 'my-offer' }[] = [];
       const mOffers = m?.offers ?? [];
       const mNeeds = m?.needs ?? [];
