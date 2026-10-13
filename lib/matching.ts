@@ -6,9 +6,21 @@ export interface ParticipantData {
   needs: string[];
 }
 
+// Categories are compared ignoring case, accents and surrounding spaces, so
+// "Jurídico", "juridico" and " JURÍDICO " are the same category.
+export function normalizeCategory(c: string): string {
+  return (c ?? '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .trim()
+    .toLowerCase();
+}
+
 export function calculateAffinity(a: ParticipantData, b: ParticipantData): number {
-  const aOffersToB = (a?.offers ?? []).filter((o: string) => (b?.needs ?? []).includes(o)).length;
-  const bOffersToA = (b?.offers ?? []).filter((o: string) => (a?.needs ?? []).includes(o)).length;
+  const aOffers = new Set((a?.offers ?? []).map(normalizeCategory));
+  const bOffers = new Set((b?.offers ?? []).map(normalizeCategory));
+  const aOffersToB = Array.from(new Set((b?.needs ?? []).map(normalizeCategory))).filter((c: string) => aOffers.has(c)).length;
+  const bOffersToA = Array.from(new Set((a?.needs ?? []).map(normalizeCategory))).filter((c: string) => bOffers.has(c)).length;
   return aOffersToB + bOffersToA;
 }
 
@@ -18,104 +30,221 @@ export function calculateAffinityPercentage(a: ParticipantData, b: ParticipantDa
   return Math.round((score / maxScore) * 100);
 }
 
+export const MAX_TABLE_SIZE = 6;
+
+// How many extra random starting points the optimizer tries (deterministic).
+const SEARCH_RESTARTS = 12;
+
+// PRIORITY: every (person, need) pair where someone at the table offers that
+// category counts this much. It is large enough to always win over the
+// secondary "overall usefulness" score below, so the optimizer first makes sure
+// that whoever needs X is seated with someone who offers X whenever possible.
+const NEED_COVERAGE_WEIGHT = 100;
+
+// SECONDARY: each participant's satisfaction is value(affinity with their table
+// mates). The exponent below 1 makes it concave: giving someone their first
+// useful match is worth more than a fifth one for someone already well served.
+const SATISFACTION_EXPONENT = 0.5;
+
+export interface FormTablesOptions {
+  satisfactionExponent?: number;
+  restarts?: number;
+  needCoverageWeight?: number;
+}
+
+/**
+ * Groups participants into tables of at most `maxSize` people. Priority order:
+ *   1. whoever needs a category should share a table with someone who offers it
+ *      (for as many of their needs as possible);
+ *   2. people at a table should be as useful to each other as possible
+ *      (mutual matches, fairly spread across everyone).
+ * Table sizes are balanced: they differ by at most one, so there are no stray
+ * tables with a single person.
+ *
+ * Approach: build a few starting arrangements (greedy by connectivity plus
+ * deterministic random shuffles), improve each by swapping people between
+ * tables while that raises the score, and keep the best result.
+ */
 export function formTables(
   participants: ParticipantData[],
-  minSize = 6,
-  maxSize = 10
+  maxSize = MAX_TABLE_SIZE,
+  options: FormTablesOptions = {}
 ): { tableNumber: number; members: string[]; affinityScore: number }[] {
   const n = participants?.length ?? 0;
   if (n === 0) return [];
 
-  // If fewer than minSize, put everyone in one table
-  if (n <= maxSize) {
-    const members = participants.map((p: ParticipantData) => p.id);
-    let totalScore = 0;
-    let pairs = 0;
-    for (let i = 0; i < n; i++) {
-      for (let j = i + 1; j < n; j++) {
-        totalScore += calculateAffinity(participants[i], participants[j]);
-        pairs++;
-      }
-    }
-    const avg = pairs > 0 ? totalScore / pairs : 0;
-    return [{ tableNumber: 1, members, affinityScore: Math.round((avg / 6) * 100) }];
-  }
+  // Normalized offer / need sets per participant (by index).
+  const offerSets: Set<string>[] = participants.map(
+    (p: ParticipantData) => new Set((p?.offers ?? []).map(normalizeCategory))
+  );
+  const needLists: string[][] = participants.map(
+    (p: ParticipantData) => Array.from(new Set((p?.needs ?? []).map(normalizeCategory)))
+  );
 
-  // Calculate optimal table count targeting ~8 per table
-  let numTables = Math.max(1, Math.round(n / 8));
-  while (numTables > 1 && Math.ceil(n / numTables) < minSize) numTables--;
-  while (Math.floor(n / numTables) > maxSize) numTables++;
-
-  // Pre-compute pairwise scores
-  const scores = new Map<string, number>();
+  // Pairwise affinity matrix (by index).
+  const s: number[][] = Array.from({ length: n }, () => new Array<number>(n).fill(0));
   for (let i = 0; i < n; i++) {
     for (let j = i + 1; j < n; j++) {
-      const key = `${participants[i].id}|${participants[j].id}`;
-      scores.set(key, calculateAffinity(participants[i], participants[j]));
+      let v = 0;
+      for (const c of needLists[j]) if (offerSets[i].has(c)) v++;
+      for (const c of needLists[i]) if (offerSets[j].has(c)) v++;
+      s[i][j] = v;
+      s[j][i] = v;
     }
   }
 
-  function getScore(id1: string, id2: string): number {
-    return scores.get(`${id1}|${id2}`) ?? scores.get(`${id2}|${id1}`) ?? 0;
+  function toResult(tables: number[][]) {
+    return tables
+      .filter((members: number[]) => members.length > 0)
+      .map((members: number[], idx: number) => {
+        let totalPairScore = 0;
+        let pairCount = 0;
+        for (let i = 0; i < members.length; i++) {
+          for (let j = i + 1; j < members.length; j++) {
+            totalPairScore += s[members[i]][members[j]];
+            pairCount++;
+          }
+        }
+        const avg = pairCount > 0 ? totalPairScore / pairCount : 0;
+        return {
+          tableNumber: idx + 1,
+          members: members.map((m: number) => participants[m].id),
+          affinityScore: Math.round((avg / 6) * 100),
+        };
+      });
   }
 
-  // Calculate connectivity for each participant
-  const connectivity = participants.map((p: ParticipantData) => {
-    let total = 0;
-    for (const other of participants) {
-      if (other.id !== p.id) total += getScore(p.id, other.id);
-    }
-    return { id: p.id, total };
-  }).sort((a: any, b: any) => b.total - a.total);
-
-  // Greedy assignment
-  const tables: string[][] = Array.from({ length: numTables }, () => []);
-  const assigned = new Set<string>();
-
-  // Seed each table with a high-connectivity participant
-  for (let t = 0; t < numTables && t < connectivity.length; t++) {
-    tables[t].push(connectivity[t].id);
-    assigned.add(connectivity[t].id);
+  // Everyone fits in one table
+  if (n <= maxSize) {
+    return toResult([Array.from({ length: n }, (_: unknown, i: number) => i)]);
   }
 
-  // Assign remaining
-  const remaining = connectivity.filter((c: any) => !assigned.has(c.id));
-  for (const { id } of remaining) {
-    let bestTable = 0;
-    let bestScore = -1;
-    for (let t = 0; t < numTables; t++) {
-      if (tables[t].length >= maxSize) continue;
-      let tableScore = 0;
-      for (const memberId of tables[t]) {
-        tableScore += getScore(id, memberId);
+  // Fewest tables that respect the cap, then spread people evenly across them:
+  // `extra` tables get one more person than the rest.
+  const numTables = Math.ceil(n / maxSize);
+  const baseSize = Math.floor(n / numTables);
+  const extra = n % numTables;
+  const capacity = Array.from({ length: numTables }, (_: unknown, t: number) => baseSize + (t < extra ? 1 : 0));
+
+  const exponent = options.satisfactionExponent ?? SATISFACTION_EXPONENT;
+  const coverageWeight = options.needCoverageWeight ?? NEED_COVERAGE_WEIGHT;
+  const value = (x: number) => Math.pow(x, exponent);
+
+  // Score of one table: (needs covered by a table mate) * weight + satisfaction.
+  function tableScore(members: number[]): number {
+    let covered = 0;
+    let satisfaction = 0;
+    for (const i of members) {
+      let sum = 0;
+      for (const j of members) {
+        if (j !== i) sum += s[i][j];
       }
-      const sizeBonus = (maxSize - tables[t].length) * 0.1;
-      const adjusted = tableScore + sizeBonus;
-      if (adjusted > bestScore) {
-        bestScore = adjusted;
-        bestTable = t;
-      }
-    }
-    tables[bestTable].push(id);
-  }
-
-  // Calculate affinity scores
-  return tables
-    .filter((members: string[]) => members.length > 0)
-    .map((members: string[], idx: number) => {
-      let totalPairScore = 0;
-      let pairCount = 0;
-      for (let i = 0; i < members.length; i++) {
-        for (let j = i + 1; j < members.length; j++) {
-          totalPairScore += getScore(members[i], members[j]);
-          pairCount++;
+      satisfaction += value(sum);
+      for (const need of needLists[i]) {
+        for (const j of members) {
+          if (j !== i && offerSets[j].has(need)) {
+            covered++;
+            break;
+          }
         }
       }
-      const avg = pairCount > 0 ? totalPairScore / pairCount : 0;
-      return {
-        tableNumber: idx + 1,
-        members,
-        affinityScore: Math.round((avg / 6) * 100),
-      };
-    });
+    }
+    return coverageWeight * covered + satisfaction;
+  }
+
+  // Deterministic PRNG so the same input always gives the same tables.
+  let seed = (12345 + n * 7919) % 4294967296;
+  const rand = () => {
+    seed = (seed * 1664525 + 1013904223) % 4294967296;
+    return seed / 4294967296;
+  };
+
+  // --- Starting arrangement: seed one person per table, then place the rest
+  // where they fit best (affinity with who is already there).
+  function greedy(order: number[]): number[][] {
+    const tables: number[][] = Array.from({ length: numTables }, () => []);
+    for (let t = 0; t < numTables; t++) tables[t].push(order[t]);
+    for (let k = numTables; k < order.length; k++) {
+      const id = order[k];
+      let bestTable = -1;
+      let bestScore = -Infinity;
+      for (let t = 0; t < numTables; t++) {
+        if (tables[t].length >= capacity[t]) continue;
+        let tableAffinity = 0;
+        for (const m of tables[t]) tableAffinity += s[id][m];
+        const adjusted = tableAffinity + (capacity[t] - tables[t].length) * 0.1;
+        if (adjusted > bestScore) {
+          bestScore = adjusted;
+          bestTable = t;
+        }
+      }
+      tables[bestTable].push(id);
+    }
+    return tables;
+  }
+
+  // --- Local search: swap two people from different tables whenever it raises
+  // the combined score of those two tables. Sizes never change, so the balance
+  // is preserved.
+  function improve(tables: number[][]): number {
+    const scores = tables.map((t: number[]) => tableScore(t));
+    for (let pass = 0; pass < 200; pass++) {
+      let improved = false;
+      for (let ta = 0; ta < numTables; ta++) {
+        for (let tb = ta + 1; tb < numTables; tb++) {
+          const A = tables[ta];
+          const B = tables[tb];
+          for (let ia = 0; ia < A.length; ia++) {
+            for (let ib = 0; ib < B.length; ib++) {
+              const x = A[ia];
+              const y = B[ib];
+              A[ia] = y;
+              B[ib] = x;
+              const newA = tableScore(A);
+              const newB = tableScore(B);
+              if (newA + newB > scores[ta] + scores[tb] + 1e-9) {
+                scores[ta] = newA;
+                scores[tb] = newB;
+                improved = true;
+              } else {
+                A[ia] = x;
+                B[ib] = y;
+              }
+            }
+          }
+        }
+      }
+      if (!improved) break;
+    }
+    return scores.reduce((a: number, b: number) => a + b, 0);
+  }
+
+  // Start 0: most connected people first; the rest are deterministic shuffles
+  // to escape poor local optima.
+  const connectivity = Array.from({ length: n }, (_: unknown, i: number) => i)
+    .map((i: number) => ({ i, total: s[i].reduce((a: number, b: number) => a + b, 0) }))
+    .sort((a: { total: number }, b: { total: number }) => b.total - a.total)
+    .map((c: { i: number }) => c.i);
+
+  const restarts = options.restarts ?? SEARCH_RESTARTS;
+  let best: number[][] | null = null;
+  let bestValue = -Infinity;
+  for (let r = 0; r <= restarts; r++) {
+    let order = connectivity;
+    if (r > 0) {
+      order = [...connectivity];
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = Math.floor(rand() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+    }
+    const tables = greedy(order);
+    const v = improve(tables);
+    if (v > bestValue + 1e-9) {
+      bestValue = v;
+      best = tables;
+    }
+  }
+
+  return toResult(best ?? greedy(connectivity));
 }

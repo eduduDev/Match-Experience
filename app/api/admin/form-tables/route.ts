@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
-import { formTables, type ParticipantData } from '@/lib/matching';
+import { formTables, MAX_TABLE_SIZE, type ParticipantData } from '@/lib/matching';
 
 export async function POST() {
   try {
@@ -39,8 +39,7 @@ export async function POST() {
       offers: p.offers ?? [], needs: p.needs ?? [],
     }));
 
-    const minSize = Math.min(6, participants.length);
-    const result = formTables(pData, minSize, 10);
+    const result = formTables(pData, MAX_TABLE_SIZE);
 
     // Create tables and assign participants
     for (const group of result) {

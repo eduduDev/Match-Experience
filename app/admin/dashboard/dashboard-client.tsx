@@ -14,6 +14,12 @@ interface Stats {
   eventStatus: string;
 }
 
+interface QuestionData {
+  id: string;
+  text: string;
+  createdAt: string;
+}
+
 interface TableData {
   id: string;
   tableNumber: number;
@@ -28,6 +34,8 @@ export function DashboardClient() {
   const [tables, setTables] = useState<TableData[]>([]);
   const [forming, setForming] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [questions, setQuestions] = useState<QuestionData[]>([]);
+  const [questionsOpen, setQuestionsOpen] = useState(false);
   const [dragItem, setDragItem] = useState<{ participantId: string; fromTableId: string } | null>(null);
 
   useEffect(() => {
@@ -36,9 +44,10 @@ export function DashboardClient() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [statsRes, tablesRes] = await Promise.all([
+      const [statsRes, tablesRes, questionsRes] = await Promise.all([
         fetch('/api/admin/stats'),
         fetch('/api/admin/tables'),
+        fetch('/api/admin/questions'),
       ]);
       if (statsRes.ok) {
         const s = await statsRes.json();
@@ -47,6 +56,10 @@ export function DashboardClient() {
       if (tablesRes.ok) {
         const t = await tablesRes.json();
         setTables(t?.tables ?? []);
+      }
+      if (questionsRes.ok) {
+        const q = await questionsRes.json();
+        setQuestions(q?.questions ?? []);
       }
     } catch { /* silent */ }
   }, []);
@@ -135,6 +148,13 @@ export function DashboardClient() {
         </button>
         <button
           type="button"
+          onClick={() => setQuestionsOpen(true)}
+          className="px-5 py-2 rounded-lg border border-border text-foreground font-medium hover:bg-card transition-colors text-sm"
+        >
+          Perguntas{questions.length > 0 ? ` (${questions.length})` : ''}
+        </button>
+        <button
+          type="button"
           onClick={handleReset}
           disabled={resetting}
           className="px-5 py-2 rounded-lg border border-red-300 text-red-600 font-medium hover:bg-red-50 transition-colors disabled:opacity-60 text-sm"
@@ -196,8 +216,53 @@ export function DashboardClient() {
 
       {/* Footer */}
       <p className="text-xs text-muted-foreground mt-8 text-center">
-        Atualização em tempo real · mesas de 6 a 10 participantes · ajuste fino manual disponível
+        Atualização em tempo real · mesas de até 6 participantes · ajuste fino manual disponível
       </p>
+
+      {/* Perguntas dos participantes (popup) */}
+      {questionsOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brown-dark/50"
+          onClick={() => setQuestionsOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Perguntas dos participantes"
+            className="w-full max-w-lg max-h-[80vh] flex flex-col bg-card rounded-2xl border border-border shadow-lg"
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          >
+            <div className="p-6 pb-4 border-b border-border">
+              <p className="text-xs font-semibold tracking-[0.2em] uppercase text-amber">Anônimas</p>
+              <h3 className="font-serif text-2xl font-bold text-foreground mt-1">Perguntas dos participantes</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                {questions.length === 0
+                  ? 'Nenhuma pergunta enviada ainda.'
+                  : `${questions.length} ${questions.length === 1 ? 'pergunta enviada' : 'perguntas enviadas'}, da mais recente para a mais antiga.`}
+              </p>
+            </div>
+            <div className="p-6 pt-4 overflow-y-auto space-y-3">
+              {questions.map((q: QuestionData) => (
+                <div key={q.id} className="bg-cream-light rounded-xl p-4 border border-border">
+                  <p className="text-sm text-foreground whitespace-pre-wrap break-words">{q.text}</p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {new Date(q.createdAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="p-6 pt-0">
+              <button
+                type="button"
+                onClick={() => setQuestionsOpen(false)}
+                className="w-full py-3 rounded-lg bg-card border border-border text-foreground font-semibold hover:bg-muted transition-colors"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

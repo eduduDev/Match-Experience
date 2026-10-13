@@ -22,6 +22,7 @@ export async function POST() {
     });
     await prisma.table.deleteMany({ where: { eventId: event.id } });
     await prisma.participant.deleteMany({ where: { eventId: event.id } });
+    await prisma.question.deleteMany({ where: { eventId: event.id } });
     await prisma.event.update({
       where: { id: event.id },
       data: { status: 'waiting' },

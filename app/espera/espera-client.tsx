@@ -2,11 +2,15 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export function EsperaClient() {
   const router = useRouter();
   const [count, setCount] = useState(0);
   const [mounted, setMounted] = useState(false);
+  const [question, setQuestion] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -34,6 +38,32 @@ export function EsperaClient() {
     const interval = setInterval(poll, 3000);
     return () => clearInterval(interval);
   }, [mounted, poll]);
+
+  async function handleSendQuestion(e: React.FormEvent) {
+    e.preventDefault();
+    const text = question.trim();
+    if (!text || sending) return;
+    const token = localStorage.getItem('sessionToken');
+    if (!token) { router.replace('/'); return; }
+    setSending(true);
+    try {
+      const res = await fetch('/api/questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionToken: token, text }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        toast.error(d?.error ?? 'Erro ao enviar a pergunta.');
+      } else {
+        setQuestion('');
+        setSent(true);
+      }
+    } catch {
+      toast.error('Erro de conexão.');
+    }
+    setSending(false);
+  }
 
   return (
     <div className="flex flex-col items-center mt-20">
@@ -70,7 +100,34 @@ export function EsperaClient() {
         </div>
       </div>
 
-      <p className="text-sm text-muted-foreground mt-6 italic">Não feche esta página.</p>
+      {/* Pergunta anônima */}
+      <form onSubmit={handleSendQuestion} className="mt-10 w-full text-left">
+        <div className="w-10 h-[3px] bg-amber rounded-full mb-4" />
+        <h3 className="font-serif text-2xl font-bold text-foreground leading-snug">
+          Enquanto você espera, queremos saber: qual pergunta você gostaria de fazer no dia de hoje que resolveria a dor do seu negócio?
+        </h3>
+        <textarea
+          value={question}
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => { setQuestion(e.target.value); if (sent) setSent(false); }}
+          placeholder="Digite aqui sua resposta..."
+          rows={4}
+          maxLength={500}
+          className="w-full mt-5 px-4 py-3 rounded-lg bg-card border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-wine focus:outline-none text-base resize-none"
+        />
+        <button
+          type="submit"
+          disabled={sending || !question.trim()}
+          className="w-full mt-3 py-3 rounded-lg bg-wine text-white font-semibold hover:bg-wine-dark transition-colors disabled:opacity-60"
+        >
+          {sending ? 'Enviando...' : 'Enviar'}
+        </button>
+        {sent && (
+          <p className="text-sm text-wine font-medium mt-3 text-center">Pergunta enviada. Obrigado!</p>
+        )}
+        <p className="text-xs text-muted-foreground mt-3 text-center italic">Todas as respostas são anônimas</p>
+      </form>
+
+      <p className="text-sm text-muted-foreground mt-8 italic">Não feche esta página.</p>
     </div>
   );
 }

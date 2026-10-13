@@ -61,6 +61,19 @@ model Event {
   createdAt    DateTime      @default(now())
   participants Participant[]
   tables       Table[]
+  questions    Question[]
+}
+
+// Anonymous questions sent from the waiting screen. Deliberately has no
+// link to Participant so the organizer can't tell who asked what.
+model Question {
+  id        String   @id @default(cuid())
+  eventId   String
+  text      String
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id])
+
+  @@index([eventId])
 }
 
 model Participant {

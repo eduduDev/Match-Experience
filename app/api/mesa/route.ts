@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { calculateAffinityPercentage, type ParticipantData } from '@/lib/matching';
+import { calculateAffinityPercentage, normalizeCategory, type ParticipantData } from '@/lib/matching';
 
 export async function GET(req: Request) {
   try {
@@ -49,20 +49,21 @@ export async function GET(req: Request) {
     // All connections at the table, with reasons, sorted by affinity
     const bestMatches = members.map((m: any) => {
       const reasons: { text: string; type: 'their-offer' | 'my-offer' }[] = [];
-      const mOffers = m?.offers ?? [];
-      const mNeeds = m?.needs ?? [];
-      const myNeeds = meData?.needs ?? [];
-      const myOffers = meData?.offers ?? [];
+      const mOffers: string[] = m?.offers ?? [];
+      const mNeeds: string[] = m?.needs ?? [];
+      const myNeeds = new Set((meData?.needs ?? []).map(normalizeCategory));
+      const myOffers: string[] = meData?.offers ?? [];
+      const theirNeeds = new Set(mNeeds.map(normalizeCategory));
 
       // What they offer that I need
       for (const cat of mOffers) {
-        if (myNeeds.includes(cat)) {
+        if (myNeeds.has(normalizeCategory(cat))) {
           reasons.push({ text: `Oferece ${cat} \u2192 voc\u00ea precisa`, type: 'their-offer' });
         }
       }
       // What I offer that they need
       for (const cat of myOffers) {
-        if (mNeeds.includes(cat)) {
+        if (theirNeeds.has(normalizeCategory(cat))) {
           reasons.push({ text: `Voc\u00ea oferece ${cat} \u2192 precisa`, type: 'my-offer' });
         }
       }
