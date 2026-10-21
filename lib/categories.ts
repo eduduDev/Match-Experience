@@ -11,6 +11,7 @@ export const CATEGORIES = [
   'Vendas e comércio',
   'Bem-estar e saúde',
   'Educação e mentoria',
+  'Decoração e projetos',
 ] as const;
 
 export type Category = (typeof CATEGORIES)[number];
