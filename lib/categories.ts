@@ -8,6 +8,9 @@ export const CATEGORIES = [
   'Design',
   'Logística',
   'Investimento',
+  'Vendas e comércio',
+  'Bem-estar e saúde',
+  'Educação e mentoria',
 ] as const;
 
 export type Category = (typeof CATEGORIES)[number];
