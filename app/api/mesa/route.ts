@@ -36,6 +36,9 @@ export async function GET(req: Request) {
       return {
         id: p.id, name: p.name, company: p.company,
         offers: p.offers ?? [], needs: p.needs ?? [],
+        // Only people at the same table are returned here, so the optional
+        // "Complemento" is visible to table mates (and the organizer), nobody else.
+        complement: p.complement ?? '',
         affinity: calculateAffinityPercentage(meData, pData),
       };
     }).sort((a: any, b: any) => b.affinity - a.affinity);

@@ -13,6 +13,7 @@ interface MatchItem {
   company: string;
   offers: string[];
   needs: string[];
+  complement?: string;
   affinity: number;
   reasons: Reason[];
 }
@@ -76,6 +77,9 @@ export function BestMatchesSheet({ open, onClose, matches }: Props) {
                           <div className="min-w-0">
                             <p className="font-bold text-foreground text-sm truncate">{match?.name ?? ''}</p>
                             <p className="text-xs text-muted-foreground truncate">{match?.company ?? ''}</p>
+                            {match?.complement ? (
+                              <p className="text-xs italic text-foreground/80 mt-1.5 whitespace-normal [overflow-wrap:anywhere]">“{match.complement}”</p>
+                            ) : null}
                           </div>
                           <span className="font-serif text-2xl font-bold text-wine flex-shrink-0">{match?.affinity ?? 0}%</span>
                         </div>

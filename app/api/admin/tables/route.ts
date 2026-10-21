@@ -18,7 +18,7 @@ export async function GET() {
 
     const tables = await prisma.table.findMany({
       where: { eventId: event.id },
-      include: { participants: { select: { id: true, name: true, company: true } } },
+      include: { participants: { select: { id: true, name: true, company: true, complement: true } } },
       orderBy: { tableNumber: 'asc' },
     });
 

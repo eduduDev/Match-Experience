@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { MAX_COMPLEMENT_LENGTH } from '@/lib/limits';
 
 export async function PUT(req: Request) {
   try {
@@ -17,12 +18,13 @@ export async function PUT(req: Request) {
     if (!participant) {
       return NextResponse.json({ error: 'Participante não encontrado.' }, { status: 404 });
     }
+    const cleanComplement = typeof complement === 'string' ? complement.trim().slice(0, MAX_COMPLEMENT_LENGTH) : '';
     await prisma.participant.update({
       where: { sessionToken },
       data: {
         offers: offers.slice(0, 3),
         needs: needs.slice(0, 3),
-        complement: complement || null,
+        complement: cleanComplement || null,
       },
     });
     return NextResponse.json({ success: true });

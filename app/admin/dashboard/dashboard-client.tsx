@@ -24,7 +24,7 @@ interface TableData {
   id: string;
   tableNumber: number;
   affinityScore: number;
-  participants: { id: string; name: string; company: string }[];
+  participants: { id: string; name: string; company: string; complement?: string | null }[];
 }
 
 export function DashboardClient() {
@@ -206,6 +206,9 @@ export function DashboardClient() {
                     className="text-sm text-foreground py-1 cursor-grab active:cursor-grabbing hover:text-wine transition-colors"
                   >
                     {p?.name ?? ''} · {p?.company ?? ''}
+                    {p?.complement ? (
+                      <span className="block text-xs italic text-muted-foreground font-normal mt-0.5 [overflow-wrap:anywhere]">“{p.complement}”</span>
+                    ) : null}
                   </div>
                 ))}
               </div>

@@ -10,6 +10,7 @@ interface TableMember {
   company: string;
   offers: string[];
   needs: string[];
+  complement?: string;
   affinity: number;
 }
 
@@ -81,10 +82,13 @@ export function MesaClient() {
                 <span className="text-sm font-semibold text-brown">{getInitials(member?.name ?? '')}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
                     <p className="font-bold text-foreground text-sm">{member?.name ?? ''}</p>
                     <p className="text-xs text-muted-foreground">{member?.company ?? ''}</p>
+                    {member?.complement ? (
+                      <p className="text-xs italic text-foreground/80 mt-1.5 [overflow-wrap:anywhere]">“{member.complement}”</p>
+                    ) : null}
                   </div>
                   <span className="font-serif text-2xl font-bold text-wine ml-2">{member?.affinity ?? 0}%</span>
                 </div>

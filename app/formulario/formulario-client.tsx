@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { CATEGORIES } from '@/lib/categories';
+import { MAX_COMPLEMENT_LENGTH } from '@/lib/limits';
 
 export function FormularioClient() {
   const router = useRouter();
@@ -111,16 +112,25 @@ export function FormularioClient() {
         <textarea
           value={complement}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setComplement(e.target.value)}
-          placeholder="Conte em uma frase o seu momento..."
+          placeholder="Conte em uma frase quem você é ou o que busca..."
           rows={3}
+          maxLength={MAX_COMPLEMENT_LENGTH}
           className="w-full px-4 py-3 rounded-lg bg-card border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-wine focus:outline-none text-base resize-none"
         />
+        <div className="flex items-start justify-between gap-3 mt-2">
+          <p className="text-xs text-muted-foreground">
+            Visível para quem estiver na sua mesa e para o organizador. Não coloque telefone ou dados pessoais.
+          </p>
+          <span className="text-xs text-muted-foreground flex-shrink-0 tabular-nums">
+            {complement.length}/{MAX_COMPLEMENT_LENGTH}
+          </span>
+        </div>
       </section>
 
       {/* Aviso */}
       <div className="border-l-4 border-wine bg-card rounded-r-lg p-4">
         <p className="text-sm text-muted-foreground">
-          Ao prosseguir, você concorda em compartilhar seu nome e empresa com os integrantes da sua mesa.
+          Ao prosseguir, você concorda em compartilhar seu nome, empresa e complemento (se preencher) com os integrantes da sua mesa e com o organizador.
         </p>
       </div>
 
