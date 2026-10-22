@@ -2,7 +2,14 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { calculateAffinityPercentage, normalizeCategory, type ParticipantData } from '@/lib/matching';
+import {
+  affinityLabelFromCoverage,
+  calculateAffinity,
+  needsCoverage,
+  normalizeCategory,
+  pairInsight,
+  type ParticipantData,
+} from '@/lib/matching';
 
 export async function GET(req: Request) {
   try {
@@ -28,26 +35,40 @@ export async function GET(req: Request) {
 
     const otherMembers = (table?.participants ?? []).filter((p: any) => p.id !== me.id);
 
+    // Raw number of matching categories, used only to break ties between equal percentages.
+    const rawMatches = new Map<string, number>();
     const members = otherMembers.map((p: any) => {
       const pData: ParticipantData = {
         id: p.id, name: p.name, company: p.company,
         offers: p.offers ?? [], needs: p.needs ?? [],
       };
+      rawMatches.set(p.id, calculateAffinity(meData, pData));
+      const insight = pairInsight(meData, pData);
       return {
         id: p.id, name: p.name, company: p.company,
         offers: p.offers ?? [], needs: p.needs ?? [],
         // Only people at the same table are returned here, so the optional
         // "Complemento" is visible to table mates (and the organizer), nobody else.
         complement: p.complement ?? '',
-        affinity: calculateAffinityPercentage(meData, pData),
+        // Match between the two of us, both directions: (their offers that I need +
+        // my offers that they need) / (my needs + their needs). 100% = a perfect fit.
+        affinity: insight.percent,
+        coversNeeds: insight.covers, // how many of my needs they offer
+        givesNeeds: insight.gives, // how many of THEIR needs I offer
       };
-    }).sort((a: any, b: any) => b.affinity - a.affinity);
+    }).sort((a: any, b: any) =>
+      // Best match between the two of us first (both directions counted), then
+      // the raw number of matching categories.
+      (b.affinity - a.affinity) ||
+      ((rawMatches.get(b.id) ?? 0) - (rawMatches.get(a.id) ?? 0)));
 
-    // Calculate affinity label
-    const avgAff = members.length > 0
-      ? Math.round(members.reduce((s: number, m: any) => s + (m?.affinity ?? 0), 0) / members.length)
-      : 0;
-    const affinityLabel = avgAff >= 70 ? 'alta' : avgAff >= 40 ? 'média' : 'baixa';
+    // How well this table serves THIS person: how many of their needs someone at the
+    // table offers. (A fixed pair-percentage threshold labelled almost every table "baixa".)
+    const { covered: needsCovered, total: needsTotal } = needsCoverage(
+      meData,
+      otherMembers.map((p: any) => ({ id: p.id, name: p.name, company: p.company, offers: p.offers ?? [], needs: p.needs ?? [] })),
+    );
+    const affinityLabel = affinityLabelFromCoverage(needsCovered, needsTotal);
 
     // All connections at the table, with reasons, sorted by affinity
     const bestMatches = members.map((m: any) => {
@@ -78,6 +99,8 @@ export async function GET(req: Request) {
       tableNumber: table.tableNumber,
       participantCount: table?.participants?.length ?? 0,
       affinityLabel,
+      needsCovered,
+      needsTotal,
       members,
       bestMatches,
     });

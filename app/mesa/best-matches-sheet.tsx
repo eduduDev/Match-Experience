@@ -15,6 +15,8 @@ interface MatchItem {
   needs: string[];
   complement?: string;
   affinity: number;
+  coversNeeds?: number;
+  givesNeeds?: number;
   reasons: Reason[];
 }
 
@@ -22,9 +24,10 @@ interface Props {
   open: boolean;
   onClose: () => void;
   matches: MatchItem[];
+  needsTotal?: number;
 }
 
-export function BestMatchesSheet({ open, onClose, matches }: Props) {
+export function BestMatchesSheet({ open, onClose, matches, needsTotal = 0 }: Props) {
   function getInitials(name: string): string {
     const parts = (name ?? '').split(' ').filter(Boolean);
     if (parts.length === 0) return '?';
@@ -83,6 +86,20 @@ export function BestMatchesSheet({ open, onClose, matches }: Props) {
                           </div>
                           <span className="font-serif text-2xl font-bold text-wine flex-shrink-0">{match?.affinity ?? 0}%</span>
                         </div>
+                        {(match?.coversNeeds ?? 0) > 0 || (match?.givesNeeds ?? 0) > 0 ? (
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2">
+                            {(match?.coversNeeds ?? 0) > 0 && needsTotal > 0 ? (
+                              <span className="text-xs text-muted-foreground">
+                                Atende {match?.coversNeeds} de {needsTotal} das suas necessidades
+                              </span>
+                            ) : null}
+                            {(match?.givesNeeds ?? 0) > 0 ? (
+                              <span className="text-xs text-muted-foreground">
+                                Você atende {match?.givesNeeds} de {(match?.needs ?? []).length} {(match?.needs ?? []).length === 1 ? 'necessidade' : 'necessidades'} dessa pessoa
+                              </span>
+                            ) : null}
+                          </div>
+                        ) : null}
                         <div className="flex flex-wrap gap-2 mt-3">
                           {(match?.reasons ?? []).map((reason: Reason, i: number) => (
                             <span

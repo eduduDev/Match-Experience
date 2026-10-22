@@ -8,10 +8,21 @@ import { signOut } from 'next-auth/react';
 
 interface Stats {
   totalParticipants: number;
+  incompleteParticipants?: number;
   tablesFormed: number;
   avgPerTable: number;
   avgAffinity: number;
+  needsCovered?: number;
+  needsFeasible?: number;
+  needsCoveragePct?: number | null;
   eventStatus: string;
+}
+
+interface IncompleteData {
+  id: string;
+  name: string;
+  company: string;
+  createdAt: string;
 }
 
 interface QuestionData {
@@ -36,6 +47,8 @@ export function DashboardClient() {
   const [resetting, setResetting] = useState(false);
   const [questions, setQuestions] = useState<QuestionData[]>([]);
   const [questionsOpen, setQuestionsOpen] = useState(false);
+  const [incomplete, setIncomplete] = useState<IncompleteData[]>([]);
+  const [incompleteOpen, setIncompleteOpen] = useState(false);
   const [dragItem, setDragItem] = useState<{ participantId: string; fromTableId: string } | null>(null);
 
   useEffect(() => {
@@ -44,10 +57,11 @@ export function DashboardClient() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [statsRes, tablesRes, questionsRes] = await Promise.all([
+      const [statsRes, tablesRes, questionsRes, incompleteRes] = await Promise.all([
         fetch('/api/admin/stats'),
         fetch('/api/admin/tables'),
         fetch('/api/admin/questions'),
+        fetch('/api/admin/incomplete'),
       ]);
       if (statsRes.ok) {
         const s = await statsRes.json();
@@ -60,6 +74,10 @@ export function DashboardClient() {
       if (questionsRes.ok) {
         const q = await questionsRes.json();
         setQuestions(q?.questions ?? []);
+      }
+      if (incompleteRes.ok) {
+        const i = await incompleteRes.json();
+        setIncomplete(i?.participants ?? []);
       }
     } catch { /* silent */ }
   }, []);
@@ -176,8 +194,30 @@ export function DashboardClient() {
         <KpiCard value={stats?.totalParticipants ?? 0} label="Participantes" />
         <KpiCard value={stats?.tablesFormed ?? 0} label="Mesas formadas" />
         <KpiCard value={stats?.avgPerTable ?? 0} label="Média por mesa" />
-        <KpiCard value={`${stats?.avgAffinity ?? 0}%`} label="Afinidade média" highlight />
+        <KpiCard
+          value={(stats?.tablesFormed ?? 0) > 0 && stats?.needsCoveragePct != null ? `${stats.needsCoveragePct}%` : '—'}
+          label="Necessidades atendidas"
+          highlight
+        />
       </div>
+
+      {/* Cadastros sem formulário concluído: não entram nas mesas */}
+      {(incomplete.length > 0) && (
+        <div className="mb-8 -mt-4 flex items-center justify-between gap-3 rounded-xl border border-amber/40 bg-[#F7E9D8] px-4 py-3">
+          <p className="text-sm text-[#7A4A20]">
+            <span className="font-semibold">{incomplete.length}</span>{' '}
+            {incomplete.length === 1 ? 'cadastro não concluiu' : 'cadastros não concluíram'} o formulário e{' '}
+            {incomplete.length === 1 ? 'ficará' : 'ficarão'} de fora das mesas.
+          </p>
+          <button
+            type="button"
+            onClick={() => setIncompleteOpen(true)}
+            className="flex-shrink-0 px-3 py-1.5 rounded-lg bg-card border border-border text-foreground text-xs font-semibold hover:bg-muted transition-colors"
+          >
+            Ver quem
+          </button>
+        </div>
+      )}
 
       {/* Tables Grid */}
       {(tables?.length ?? 0) > 0 && (
@@ -221,6 +261,52 @@ export function DashboardClient() {
       <p className="text-xs text-muted-foreground mt-8 text-center">
         Atualização em tempo real · mesas de até 6 participantes · ajuste fino manual disponível
       </p>
+
+      {/* Cadastros sem formulário (popup) */}
+      {incompleteOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brown-dark/50"
+          onClick={() => setIncompleteOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Cadastros sem formulário"
+            className="w-full max-w-lg max-h-[80vh] flex flex-col bg-card rounded-2xl border border-border shadow-lg"
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+          >
+            <div className="p-6 pb-4 border-b border-border">
+              <p className="text-xs font-semibold tracking-[0.2em] uppercase text-amber">Ficam de fora das mesas</p>
+              <h3 className="font-serif text-2xl font-bold text-foreground mt-1">Cadastros sem formulário</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                {incomplete.length === 0
+                  ? 'Todos os cadastros concluíram o formulário.'
+                  : 'Peça para essas pessoas terminarem o formulário antes de formar as mesas.'}
+              </p>
+            </div>
+            <div className="p-6 pt-4 overflow-y-auto space-y-3">
+              {incomplete.map((p: IncompleteData) => (
+                <div key={p.id} className="bg-cream-light rounded-xl p-4 border border-border">
+                  <p className="text-sm font-semibold text-foreground break-words">{p.name}</p>
+                  <p className="text-xs text-muted-foreground break-words">{p.company}</p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Cadastrou às {new Date(p.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="p-6 pt-0">
+              <button
+                type="button"
+                onClick={() => setIncompleteOpen(false)}
+                className="w-full py-3 rounded-lg bg-card border border-border text-foreground font-semibold hover:bg-muted transition-colors"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Perguntas dos participantes (popup) */}
       {questionsOpen && (

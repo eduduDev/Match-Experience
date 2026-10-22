@@ -12,12 +12,16 @@ interface TableMember {
   needs: string[];
   complement?: string;
   affinity: number;
+  coversNeeds?: number;
+  givesNeeds?: number;
 }
 
 interface MesaData {
   tableNumber: number;
   participantCount: number;
   affinityLabel: string;
+  needsCovered?: number;
+  needsTotal?: number;
   members: TableMember[];
   bestMatches: (TableMember & { reasons: { text: string; type: 'their-offer' | 'my-offer' }[] })[];
 }
@@ -68,6 +72,12 @@ export function MesaClient() {
         <p className="text-sm text-muted-foreground mt-2">
           {data?.participantCount ?? 0} participantes • afinidade {data?.affinityLabel ?? 'alta'}
         </p>
+        {(data?.needsTotal ?? 0) > 0 ? (
+          <p className="text-sm text-foreground mt-1">
+            Sua mesa atende <span className="font-semibold text-wine">{data?.needsCovered ?? 0} de {data?.needsTotal}</span>{' '}
+            {data?.needsTotal === 1 ? 'da sua necessidade' : 'das suas necessidades'}
+          </p>
+        ) : null}
       </div>
 
       {/* Members list */}
@@ -88,6 +98,20 @@ export function MesaClient() {
                     <p className="text-xs text-muted-foreground">{member?.company ?? ''}</p>
                     {member?.complement ? (
                       <p className="text-xs italic text-foreground/80 mt-1.5 [overflow-wrap:anywhere]">“{member.complement}”</p>
+                    ) : null}
+                    {(member?.coversNeeds ?? 0) > 0 || (member?.givesNeeds ?? 0) > 0 ? (
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-2">
+                        {(member?.coversNeeds ?? 0) > 0 ? (
+                          <span className="text-xs text-muted-foreground">
+                            Atende {member?.coversNeeds} de {data?.needsTotal} das suas necessidades
+                          </span>
+                        ) : null}
+                        {(member?.givesNeeds ?? 0) > 0 ? (
+                          <span className="text-xs text-muted-foreground">
+                            Você atende {member?.givesNeeds} de {(member?.needs ?? []).length} {(member?.needs ?? []).length === 1 ? 'necessidade' : 'necessidades'} dessa pessoa
+                          </span>
+                        ) : null}
+                      </div>
                     ) : null}
                   </div>
                   <span className="font-serif text-2xl font-bold text-wine ml-2">{member?.affinity ?? 0}%</span>
@@ -124,6 +148,7 @@ export function MesaClient() {
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
         matches={data?.bestMatches ?? []}
+        needsTotal={data?.needsTotal ?? 0}
       />
     </div>
   );
